@@ -18,22 +18,6 @@
 };
 
 &amba {
-	clocking0: clocking0 {
-		#clock-cells = <0>;
-		assigned-clock-rates = <99999001>;
-		assigned-clocks = <&zynqmp_clk 71>;
-		clock-output-names = "fabric_clk";
-		clocks = <&zynqmp_clk 71>;
-		compatible = "xlnx,fclk";
-	};
-	clocking1: clocking1 {
-		#clock-cells = <0>;
-		assigned-clock-rates = <199998001>;
-		assigned-clocks = <&zynqmp_clk 72>;
-		clock-output-names = "fabric_clk";
-		clocks = <&zynqmp_clk 72>;
-		compatible = "xlnx,fclk";
-	};
 	afi0: afi0 {
 		compatible = "xlnx,afi-fpga";
 		config-afi = <0 0>, <1 0>, <2 0>, <3 0>, <4 0>, <5 0>, <6 0>, <7 0>, <8 0>, <9 0>, <10 0>, <11 0>, <12 0>, <13 0>, <14 0xA00>, <15 0x00>;
@@ -44,10 +28,34 @@
 		reset-names = "pl0", "pl1", "pl2", "pl3";
 	};
 
+	pl0_ref_100M: pl0_ref_100M { /* clk_out2 - clk_wiz_0 */
+		#clock-cells = <0x0>;
+		compatible = "fixed-factor-clock";
+		clocks = <&zynqmp_clk 71>;
+		clock-div = <9>;
+		clock-mult = <9>;
+	};
+
+	clk_out_100M: clk_out_100M { /* qpll0_clk/refclk - phy_sharedlogic_wrap */
+		#clock-cells = <0x0>;
+		compatible = "fixed-factor-clock";
+		clocks = <&clk_156>; /* u90 - 156.25Mhz clock - modelled in board dtd */
+		clock-div = <25>;
+		clock-mult = <16>;
+	};
+
+	clk_out_237M: clk_out_237M { /* pix_clk - SLVS_EC_IP */
+		#clock-cells = <0x0>;
+		compatible = "fixed-factor-clock";
+		clocks = <&clk_74>; /* u88 - 74.25Mhz clock - modelled in board dts */
+		clock-div = <20>;
+		clock-mult = <64>;
+	};
+
 	CPU_axi_epc_0: axi_epc@a0000000 {
 		/* This is a place holder node for a custom IP, user may need to update the entries */
 		clock-names = "s_axi_aclk", "prh_clk";
-		clocks = <&misc_clk_0>, <&misc_clk_0>;
+		clocks = <&pl0_ref_100M>, <&pl0_ref_100M>;
 		compatible = "xlnx,axi-epc-2.0";
 		reg = <0x0 0xa0000000 0x0 0x10000>;
 		xlnx,num-peripherals = <0x1>;
@@ -146,16 +154,12 @@
 		xlnx,prh3-wrn-width = <0x0>;
 		xlnx,s-axi-clk-period-ps = <0x2710>;
 	};
-	misc_clk_0: misc_clk_0 {
-		#clock-cells = <0>;
-		clock-frequency = <99999000>;
-		compatible = "fixed-clock";
-	};
+
 	IS_CONTROL_sensor_iic: i2c@a0010000 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		clock-names = "s_axi_aclk";
-		clocks = <&misc_clk_0>;
+		clocks = <&pl0_ref_100M>;
 		compatible = "xlnx,axi-iic-2.1", "xlnx,xps-iic-2.00.a";
 		interrupt-names = "iic2intc_irpt";
 		interrupt-parent = <&gic>;
@@ -178,14 +182,14 @@
 	SLVS_EC_slvs_ec_rx_0: slvs_ec_rx@a0020000 {
 		/* This is a place holder node for a custom IP, user may need to update the entries */
 		clock-names = "axi_aclk";
-		clocks = <&misc_clk_0>;
+		clocks = <&pl0_ref_100M>;
 		compatible = "xlnx,slvs-ec-rx-1.5";
 		reg = <0x0 0xa0020000 0x0 0x10000>;
 	};
 
 	ppi_video@a0030000 {
 		clock-names = "axi_aclk";
-		clocks = <&misc_clk_0>;
+		clocks = <&pl0_ref_100M>;
 		compatible = "xlnx,ppi-video-1.0";
 		reg = <0x0 0xa0030000 0x0 0x10000>;
 		xlnx,s00-axi-addr-width = <0x4>;
@@ -203,18 +207,14 @@
 	gev_gendcip_0: gendcip@a0008000 {
 		/* This is a place holder node for a custom IP, user may need to update the entries */
 		clock-names = "s0_axi_aclk", "s1_axis_aclk";
-		clocks = <&misc_clk_0>, <&misc_clk_1>;
+		clocks = <&pl0_ref_100M>, <&clk_out_237M>;
 		compatible = "xlnx,gendcip-1.0.3";
 		reg = <0x0 0xa0008000 0x0 0x8000>;
 	};
-	misc_clk_1: misc_clk_1 {
-		#clock-cells = <0>;
-		clock-frequency = <237600000>;
-		compatible = "fixed-clock";
-	};
+
 	gev_xgige_0: xgige@a0060000 {
-		clock-names = "s0_axi_aclk", "rx_axis_aclk";
-		clocks = <&misc_clk_0>, <&misc_clk_2>;
+		clock-names = "s0_axi_aclk", "mac_tx_clk", "mac_rx_clk", "mem_clk";
+		clocks = <&pl0_ref_100M>, <&clk_156>, <&clk_156>, <&zynqmp_clk 72>;
 		compatible = "xlnx,axi-epc-2.0", "s2i,s2imac-epc";
 		device_type = "network";
 		interrupt-names = "sys_irq";
@@ -229,14 +229,10 @@
 		phy-base-address-length = <0x10000>;
 		local-mac-address = [00 0a 35 00 22 02];
 	};
-	misc_clk_2: misc_clk_2 {
-		#clock-cells = <0>;
-		clock-frequency = <100000000>;
-		compatible = "fixed-clock";
-	};
+	
 	xlnx_isp_v_demosaic_0: v_demosaic@b0040000 {
 		clock-names = "ap_clk";
-		clocks = <&misc_clk_1>;
+		clocks = <&clk_out_237M>;
 		compatible = "xlnx,v-demosaic-1.1", "xlnx,v-demosaic";
 		interrupt-names = "interrupt";
 		interrupt-parent = <&gic>;
@@ -273,7 +269,7 @@
 	xlnx_isp_v_frmbuf_wr_0: v_frmbuf_wr@b0050000 {
 		#dma-cells = <1>;
 		clock-names = "ap_clk";
-		clocks = <&misc_clk_1>;
+		clocks = <&clk_out_237M>;
 		compatible = "xlnx,v-frmbuf-wr-2.3", "xlnx,axi-frmbuf-wr-v2.2";
 		interrupt-names = "interrupt";
 		interrupt-parent = <&gic>;
@@ -311,7 +307,7 @@
 
 	xlnx_isp_v_proc_ss_0: v_proc_ss@b0000000 {
 		clock-names = "aclk_axis", "aclk_ctrl";
-		clocks = <&misc_clk_1>, <&misc_clk_1>;
+		clocks = <&clk_out_237M>, <&clk_out_237M>;
 		compatible = "xlnx,v-vpss-scaler-2.2";
 		reg = <0x0 0xb0000000 0x0 0x40000>;
 		reset-gpios = <&gpio 79 1>;
@@ -358,8 +354,8 @@
 	};
 	xxv_ethernet_0: ethernet@a0070000 {
 		clock-frequency = <100000000>;
-		clock-names = "rx_core_clk_0", "dclk", "qpll0clk_in", "qpll0refclk_in", "qpll1clk_in", "qpll1refclk_in", "s_axi_aclk_0";
-		clocks = <&misc_clk_3>, <&misc_clk_0>, <&misc_clk_2>, <&misc_clk_2>, <&misc_clk_2>, <&misc_clk_2>, <&misc_clk_0>;
+		clock-names = "rx_core_clk_0", "dclk", "qpll0clk_in", "qpll0refclk_in", "s_axi_aclk_0";
+		clocks = <&clk_156>, <&pl0_ref_100M>, <&clk_out_100M>, <&clk_out_100M>, <&pl0_ref_100M>; /* clk_156 - u90 - SFP+ - modelled in board dts */
 		compatible = "xlnx,xxv-ethernet-4.0", "xlnx,xxv-ethernet-1.0";
 		device_type = "network";
 		local-mac-address = [00 0a 35 00 00 02];
@@ -428,11 +424,7 @@
 			#size-cells = <0>;
 		};
 	};
-	misc_clk_3: misc_clk_3 {
-		#clock-cells = <0>;
-		clock-frequency = <156250000>;
-		compatible = "fixed-clock";
-	};
+	
 	vcap_xlnx_isp_v_proc_ss_0 {
 		compatible = "xlnx,video";
 		dma-names = "port0";

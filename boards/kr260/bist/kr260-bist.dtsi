@@ -21,65 +21,50 @@
 		compatible = "xlnx,afi-fpga";
 		config-afi = <0 0>, <1 0>, <2 0>, <3 0>, <4 0>, <5 0>, <6 0>, <7 0>, <8 0>, <9 0>, <10 0>, <11 0>, <12 0>, <13 0>, <14 0xa00>, <15 0x000>;
 	};
-	clocking0: clocking0 {
-		#clock-cells = <0>;
-		assigned-clock-rates = <99999001>;
-		assigned-clocks = <&zynqmp_clk 71>;
-		clock-output-names = "fabric_clk";
+
+	pl0_ref_100M: pl0_ref_100M { /* clk_out2 - clk_wiz_0 */
+		#clock-cells = <0x0>;
+		compatible = "fixed-factor-clock";
 		clocks = <&zynqmp_clk 71>;
-		compatible = "xlnx,fclk";
+		clock-div = <9>;
+		clock-mult = <9>;
 	};
-	clocking1: clocking1 {
-		#clock-cells = <0>;
-		assigned-clock-rates = <199998001>;
-		assigned-clocks = <&zynqmp_clk 72>;
-		clock-output-names = "fabric_clk";
-		clocks = <&zynqmp_clk 72>;
-		compatible = "xlnx,fclk";
+
+	gem2_clk_out_125M: gem2_clk_out_125M { /* clk_out1 - clk_wiz_gem2 */
+		#clock-cells = <0x0>;
+		compatible = "fixed-factor-clock";
+		clocks = <&clk_25_0>; /* u92/u91 - 25MHz clock - modelled in board dts*/
+		clock-div = <1>;
+		clock-mult = <5>;
 	};
-	misc_clk_0: misc_clk_0 {
-		#clock-cells = <0>;
-		clock-frequency = <125000000>;
-		compatible = "fixed-clock";
+
+	gem2_clk_out_333M: gem2_clk_out_333M { /* clk_out2 - clk_wiz_gem2 */
+		#clock-cells = <0x0>;
+		compatible = "fixed-factor-clock";
+		clocks = <&clk_25_0>; /* u92/u91 - 25MHz clock - modelled in board dts*/
+		clock-div = <3>;
+		clock-mult = <40>;
 	};
-	misc_clk_1: misc_clk_1 {
-		#clock-cells = <0>;
-		clock-frequency = <333333333>;
-		compatible = "fixed-clock";
+
+	gem3_clk_out_125M: gem3_clk_out_125M { /* clk_out1 - clk_wiz_gem3 */
+		#clock-cells = <0x0>;
+		compatible = "fixed-factor-clock";
+		clocks = <&clk_25_1>; /* u92/u91 - 25MHz clock - modelled in board dts*/
+		clock-div = <1>;
+		clock-mult = <5>;
 	};
-	misc_clk_2: misc_clk_2 {
-		#clock-cells = <0>;
-		clock-frequency = <100000000>;
-		compatible = "fixed-clock";
+
+	clk_out_237M: clk_out_237M { /* rd_clk_i - SLVS_EC_IP */
+		#clock-cells = <0x0>;
+		compatible = "fixed-factor-clock";
+		clocks = <&clk_74>; /* u88 - 74.25Mhz clock - modelled in board dts*/
+		clock-div = <20>;
+		clock-mult = <64>;
 	};
-	misc_clk_3: misc_clk_3 {
-		#clock-cells = <0>;
-		clock-frequency = <125000000>;
-		compatible = "fixed-clock";
-	};
-	misc_clk_4: misc_clk_4 {
-		#clock-cells = <0>;
-		clock-frequency = <333333333>;
-		compatible = "fixed-clock";
-	};
-	misc_clk_5: misc_clk_5 {
-		#clock-cells = <0>;
-		clock-frequency = <99999000>;
-		compatible = "fixed-clock";
-	};
-	misc_clk_6: misc_clk_6 {
-		#clock-cells = <0>;
-		clock-frequency = <156250000>;
-		compatible = "fixed-clock";
-	};
-	misc_clk_7: misc_clk_7 {
-		#clock-cells = <0>;
-		clock-frequency = <237600000>;
-		compatible = "fixed-clock";
-	};
+
 	axi_gpio_0: gpio@a0000000 {
 		#gpio-cells = <2>;
-		clocks = <&misc_clk_5>;
+		clocks = <&pl0_ref_100M>;
 		compatible = "xlnx,xps-gpio-1.00.a";
 		gpio-controller ;
 		reg = <0x0 0xa0000000 0x0 0x10000>;
@@ -96,10 +81,11 @@
 		xlnx,tri-default = <0xffffffff>;
 		xlnx,tri-default-2 = <0xffffffff>;
 	};
+
 	ETH10G_axi_eth10G_DMA: dma@a0160000 {
 		#dma-cells = <1>;
 		clock-names = "s_axi_lite_aclk", "m_axi_sg_aclk", "m_axi_mm2s_aclk", "m_axi_s2mm_aclk";
-		clocks = <&misc_clk_5>, <&zynqmp_clk 71>, <&misc_clk_6>, <&misc_clk_6>;
+		clocks = <&pl0_ref_100M>, <&pl0_ref_100M>, <&clk_156>, <&clk_156>; /* clk_156 - u90 - SFP+ - modelled in board dts */
 		compatible = "xlnx,eth-dma";
 		interrupt-names = "mm2s_introut", "s2mm_introut";
 		interrupt-parent = <&gic>;
@@ -108,10 +94,11 @@
 		xlnx,addrwidth = /bits/ 8 <0x20>;
 		xlnx,num-queues = /bits/ 16 <0x1>;
 	};
+
 	ETH10G_xxv_ethernet_1: ethernet@a0130000 {
 		axistream-connected = <&ETH10G_axi_eth10G_DMA>;
-		clock-names = "rx_core_clk", "dclk", "s_axi_aclk", "s_axi_lite_aclk", "m_axi_sg_aclk", "m_axi_mm2s_aclk", "m_axi_s2mm_aclk";
-		clocks = <&misc_clk_6>,  <&misc_clk_5>,  <&misc_clk_5>, <&misc_clk_5>, <&zynqmp_clk 71>, <&misc_clk_6>, <&misc_clk_6>;
+		clock-names = "rx_core_clk", "dclk", "s_axi_aclk";
+		clocks = <&clk_156>, <&pl0_ref_100M>, <&pl0_ref_100M>; /* clk_156 - u90 - SFP+ - modelled in board dts */
 		compatible = "xlnx,xxv-ethernet-4.1", "xlnx,xxv-ethernet-1.0";
 		device_type = "network";
 		interrupt-names = "mm2s_introut", "s2mm_introut";
@@ -125,10 +112,11 @@
 		xlnx,num-queues = /bits/ 16 <0x1>;
 		xlnx,rxmem = <0x10000>;
 	};
+
 	GEM2_axi_dma_gem2: dma@a0140000 {
 		#dma-cells = <1>;
 		clock-names = "s_axi_lite_aclk", "m_axi_sg_aclk", "m_axi_mm2s_aclk", "m_axi_s2mm_aclk";
-		clocks = <&misc_clk_0>, <&misc_clk_3>, <&misc_clk_3>, <&misc_clk_3>;
+		clocks = <&pl0_ref_100M>, <&gem2_clk_out_125M>, <&gem2_clk_out_125M>, <&gem2_clk_out_125M>;
 		compatible = "xlnx,eth-dma";
 		interrupt-names = "mm2s_introut", "s2mm_introut";
 		interrupt-parent = <&gic>;
@@ -137,10 +125,11 @@
 		xlnx,addrwidth = /bits/ 8 <0x20>;
 		xlnx,num-queues = /bits/ 16 <0x1>;
 	};
+
 	GEM2_axi_ethernet_gem2: ethernet@a0180000 {
 		axistream-connected = <&GEM2_axi_dma_gem2>;
 		clock-names = "s_axi_lite_clk", "axis_clk", "gtx_clk", "ref_clk";
-		clocks = <&misc_clk_0>, <&misc_clk_3>, <&misc_clk_3>, <&misc_clk_4>;
+		clocks = <&pl0_ref_100M>, <&gem2_clk_out_125M>, <&gem2_clk_out_125M>, <&gem2_clk_out_333M>;
 		compatible = "xlnx,axi-ethernet-7.2", "xlnx,axi-ethernet-1.00.a";
 		device_type = "network";
 		interrupt-names = "mac_irq", "interrupt", "mm2s_introut", "s2mm_introut";
@@ -168,10 +157,11 @@
 			};
 		};
 	};
+
 	GEM3_axi_dma_gem3: dma@a0150000 {
 		#dma-cells = <1>;
 		clock-names = "s_axi_lite_aclk", "m_axi_sg_aclk", "m_axi_mm2s_aclk", "m_axi_s2mm_aclk";
-		clocks = <&misc_clk_0>, <&misc_clk_3>, <&misc_clk_3>, <&misc_clk_3>;
+		clocks = <&pl0_ref_100M>, <&gem3_clk_out_125M>, <&gem3_clk_out_125M>, <&gem3_clk_out_125M>;
 		compatible = "xlnx,eth-dma";
 		interrupt-names = "mm2s_introut", "s2mm_introut";
 		interrupt-parent = <&gic>;
@@ -180,10 +170,11 @@
 		xlnx,addrwidth = /bits/ 8 <0x20>;
 		xlnx,num-queues = /bits/ 16 <0x1>;
 	};
+
 	GEM3_axi_ethernet_gem3: ethernet@a01c0000 {
 		axistream-connected = <&GEM3_axi_dma_gem3>;
 		clock-names = "s_axi_lite_clk", "axis_clk", "gtx_clk";
-		clocks = <&misc_clk_0>, <&misc_clk_3>, <&misc_clk_3>;
+		clocks = <&pl0_ref_100M>, <&gem3_clk_out_125M>, <&gem3_clk_out_125M>;
 		compatible = "xlnx,axi-ethernet-7.2", "xlnx,axi-ethernet-1.00.a";
 		device_type = "network";
 		interrupt-names = "mac_irq", "interrupt", "mm2s_introut", "s2mm_introut";
@@ -211,11 +202,12 @@
 			};
 		};
 	};
+
 	IS_CONTROL_sensor_iic: i2c@a0010000 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		clock-names = "s_axi_aclk";
-		clocks = <&misc_clk_5>;
+		clocks = <&pl0_ref_100M>;
 		compatible = "xlnx,axi-iic-2.1", "xlnx,xps-iic-2.00.a";
 		interrupt-names = "iic2intc_irpt";
 		interrupt-parent = <&gic>;
@@ -235,10 +227,11 @@
 			};
 		};
 	};
+
 	xlnx_isp_v_frmbuf_wr_0: v_frmbuf_wr@b0050000 {
 		#dma-cells = <1>;
 		clock-names = "ap_clk";
-		clocks = <&misc_clk_7>;
+		clocks = <&clk_out_237M>;
 		compatible = "xlnx,v-frmbuf-wr-2.3", "xlnx,axi-frmbuf-wr-v2.2";
 		interrupt-names = "interrupt";
 		interrupt-parent = <&gic>;
@@ -255,6 +248,7 @@
 		xlnx,vid-formats = "y8";
 		xlnx,video-width = <8>;
 	};
+
 	axis_subset_conv: isp_subset_convertor {
 		compatible = "xlnx,axis-subsetconv-1.1";
 		ports {
@@ -272,6 +266,7 @@
 			};
 		};
 	};
+
 	vcap_xlnx_isp_v_proc_ss_0 {
 		compatible = "xlnx,video";
 		dma-names = "port0";

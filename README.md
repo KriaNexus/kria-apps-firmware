@@ -6,7 +6,7 @@ Starter Kits.
 For kr260, kv260, and kd240 each set of firmware files consists of:
 1. PL bitstream binary
 2. Xclbin binary (optional)
-3. Device tree overlay source
+3. Device tree overlay source or binary
 4. json file required by dfx-mgr
 
 For k26-dfx/2rp each set of firmware files consists of shell and reconfigurable module(RM) files.
@@ -53,6 +53,13 @@ At runtime devicetree overlay (*.dtbo) and fpga configuration data (*.bin)
 are needed as binaries. Make flow is introduced to generate the required binaries
 for all supported applications listed above. Compiling the binaries are dependent
 on 'bootgen utility' a dependent tool needed before running make.
+
+For certain applications, the device tree source files have been moved to the
+kria-vitis-platforms repository next to the corresponding Vivado and Vitis
+design source files: https://github.com/Xilinx/kria-vitis-platforms.
+Additionally, the bitstream may be provided as .bin file directly which makes
+the conversion from .bit to .bin using bootgen obsolete.
+
 Following are example illustrations
 
 ### Runtime on Xilinx target
@@ -83,6 +90,15 @@ git clone https://github.com/Xilinx/kria-apps-firmware.git
 cd kria-apps-firmware/
 sudo make -C k26-dfx/2rp install
 ```
+
+For a single application firmware bundle
+```
+sudo apt install bootgen-xlnx
+git clone https://github.com/Xilinx/kria-apps-firmware.git
+cd kria-apps-firmware/boards
+sudo make APPS=kd240/motor-ctrl-qei/ install
+```
+**Note:** The trailing slash when passing the APPS variable is required.
 
 ### Compilation on Linux Host machine
 Source the 'bootgen utility' a dependent tool before running make. You can install

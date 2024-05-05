@@ -7,8 +7,12 @@ DTSIS := $(wildcard $(patsubst %,%*.dtsi,$(APPS)))
 XCLBINS := $(wildcard $(patsubst %,%*.xclbin,$(APPS)))
 JSONS := $(wildcard $(patsubst %,%shell.json,$(APPS)))
 
+# prebuilt *.bin and *.dtbo files
+BINS_PRE := $(wildcard $(patsubst %,%*.bin,$(APPS)))
+DTBOS_PRE := $(wildcard $(patsubst %,%*.dtbo,$(APPS)))
+
 # *.dtbo files to generate
-DTBOS := $(patsubst %.dtsi,%.dtbo,$(DTSIS))
+DTBOS_GEN += $(patsubst %.dtsi,%.dtbo,$(DTSIS))
 
 %.dtbo: %.dtsi
 	dtc -I dts -O dtb -o $@ $<
@@ -18,7 +22,12 @@ BIF_TEMPLATE := template.bif
 
 # *.bif and *.bins files to generate
 BIFS := $(patsubst %.bit,%.bif,$(BITS))
-BINS := $(patsubst %.bit,%.bin,$(BITS))
+BINS_GEN := $(patsubst %.bit,%.bin,$(BITS))
+
+# combination of all bins and dtbos (generated or prebuilt)
+# use sort function to remove duplicates
+BINS := $(sort $(BINS_GEN) $(BINS_PRE))
+DTBOS := $(sort $(DTBOS_GEN) $(DTBOS_PRE))
 
 %.bif: %.bit
 	sed 's#@BIT@#$<#' <$(BIF_TEMPLATE) >$@
@@ -34,8 +43,8 @@ dtbos: $(DTBOS)
 
 clean:
 	rm -f $(BIFS)
-	rm -f $(BINS)
-	rm -f $(DTBOS)
+	rm -f $(BINS_GEN)
+	rm -f $(DTBOS_GEN)
 
 INSTALLDIR := $(DESTDIR)/lib/firmware/xilinx
 

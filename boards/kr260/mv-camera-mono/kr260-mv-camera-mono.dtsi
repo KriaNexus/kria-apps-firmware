@@ -3,7 +3,7 @@
  * dts file for Xilinx KR260 MV-Camera
  *
  * Copyright (C) 2021 - 2022, Xilinx, Inc.
- * Copyright (C) 2022 - 2023, Advanced Micro Devices, Inc.
+ * Copyright (C) 2022 - 2024, Advanced Micro Devices, Inc.
  *
  */
 
@@ -13,7 +13,7 @@
 &fpga_full {
     #address-cells = <2>;
     #size-cells = <2>;
-    firmware-name = "kr260-mv-camera.bit.bin";
+    firmware-name = "kr260-mv-camera-mono.bit.bin";
     resets = <&zynqmp_reset 116>,<&zynqmp_reset 117>;
 };
 
@@ -22,9 +22,9 @@
 		compatible = "xlnx,afi-fpga";
 		config-afi = <0 0>, <1 0>, <2 0>, <3 0>, <4 0>, <5 0>, <6 0>, <7 0>, <8 0>, <9 0>, <10 0>, <11 0>, <12 0>, <13 0>, <14 0xA00>, <15 0x00>;
 		resets = <&zynqmp_reset 116>,
-				<&zynqmp_reset 117>,
-				<&zynqmp_reset 118>,
-				<&zynqmp_reset 119>;
+			<&zynqmp_reset 117>,
+			<&zynqmp_reset 118>,
+			<&zynqmp_reset 119>;
 		reset-names = "pl0", "pl1", "pl2", "pl3";
 	};
 
@@ -179,6 +179,7 @@
 			};
 		};
 	};
+
 	SLVS_EC_slvs_ec_rx_0: slvs_ec_rx@a0020000 {
 		/* This is a place holder node for a custom IP, user may need to update the entries */
 		clock-names = "axi_aclk";
@@ -204,6 +205,7 @@
 		interrupts = <0 89 4>;
 		reg = <0x0 0xa0040000 0x0 0x10000>;
 	};
+
 	gev_gendcip_0: gendcip@a0008000 {
 		/* This is a place holder node for a custom IP, user may need to update the entries */
 		clock-names = "s0_axi_aclk", "s1_axis_aclk";
@@ -229,11 +231,6 @@
 		phy-base-address-length = <0x10000>;
 		local-mac-address = [00 0a 35 00 22 02];
 	};
-	misc_clk_2: misc_clk_2 {
-		#clock-cells = <0>;
-		clock-frequency = <100000000>;
-		compatible = "fixed-clock";
-	};
 
 	xlnx_isp_v_frmbuf_wr_0: v_frmbuf_wr@b0050000 {
 		#dma-cells = <1>;
@@ -256,36 +253,31 @@
 		xlnx,video-width = <8>;
 	};
 
-	xlnx_isp_v_demosaic_0: ISPPipeline_accel@b0000000 {
-		compatible = "xlnx,isppipeline-mono-1.0";
+	xlnx_isppipeline_accel: ISPPipeline_accel@b0000000 {
+		compatible = "xlnx,isppipeline-1.0";
 		reg = <0x0 0xb0000000 0x0 0x10000>;
-		clocks = <&misc_clk_1>;
+		clocks = <&clk_out_237M>;
+		clock-names = "ap_clk";
 		reset-gpios = <&gpio 81 1>;
-		xlnx,max-width = /bits/ 16 <2472>;
-		xlnx,max-height = /bits/ 16 <2064>;
-		xlnx,rgain = /bits/ 16 <128>;
-		xlnx,bgain = /bits/ 16 <3>;
-		xlnx,pawb = /bits/ 16 <4>;
-		xlnx,mode-reg = /bits/ 16 <4>;
 
-		demosaic_portsxlnx_isp_v_demosaic_0: ports {
+		isppipeline_portsxlnx_isppipeline_accel: ports {
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			demosaic_port0xlnx_isp_v_demosaic_0: port@0 {
+			isppipeline_port0xlnx_isppipeline_accel: port@0 {
 				reg = <0>;
 				xlnx,video-width = <8>;
 
-				demosaic_in: endpoint {
+				isppipeline_in: endpoint {
 					remote-endpoint = <&subset_conv_out>;
 				};
 			};
 
-			demosaic_port1xlnx_isp_v_demosaic_0: port@1 {
+			isppipeline_port1xlnx_isppipeline_accel: port@1 {
 				reg = <1>;
 				xlnx,video-width = <8>;
 
-				demosaic_out: endpoint {
+				isppipeline_out: endpoint {
 					remote-endpoint = <&fbwr_in>;
 				};
 			};
@@ -304,7 +296,7 @@
 			port@1 {
 				reg = <0x1>;
 				subset_conv_out: endpoint {
-					remote-endpoint = <&demosaic_in>;
+					remote-endpoint = <&isppipeline_in>;
 				};
 			};
 		};
@@ -382,7 +374,7 @@
 			#size-cells = <0>;
 		};
 	};
-	
+
 	vcap_xlnx_isp_v_proc_ss_0 {
 		compatible = "xlnx,video";
 		dma-names = "port0";
@@ -394,7 +386,7 @@
 				direction = "input";
 				reg = <0>;
 				fbwr_in: endpoint {
-					remote-endpoint = <&demosaic_out>;
+					remote-endpoint = <&isppipeline_out>;
 				};
 			};
 		};

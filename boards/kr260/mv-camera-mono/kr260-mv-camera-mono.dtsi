@@ -254,7 +254,7 @@
 	};
 
 	xlnx_isppipeline_accel: ISPPipeline_accel@b0000000 {
-		compatible = "xlnx,isppipeline-1.0";
+		compatible = "xlnx,isppipeline-2.0";
 		reg = <0x0 0xb0000000 0x0 0x10000>;
 		clocks = <&clk_out_237M>;
 		clock-names = "ap_clk";
